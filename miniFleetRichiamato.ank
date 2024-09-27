@@ -1,0 +1,31 @@
+ore = 2 //Ore dopo cui richiamo
+richiamo = ore * 60 * 60 //Il richiamo va in secondi quindi partendo dalle ore calcolo
+minDeu = 10000000 //Deuterio da lasciare sulla luna
+//Recupero info dalla luna che mi interessa
+luna, errM = GetMoon("M:5:134:7")
+allShips, _ = luna.GetShips()
+res,errR = luna.GetResources()
+
+//Creo la flotta e la invio
+fleet = NewFleet()
+fleet.SetOrigin(luna)
+fleet.SetDestination("M:5:133:7")
+fleet.SetSpeed(TEN_PERCENT)
+fleet.SetMission(PARK)
+fleet.SetAllMetal()
+fleet.SetAllCrystal()
+fleet.SetShips(allShips)
+//Qui tolgo le navi da lasciare sulla luna
+fleet.AddShips(LARGECARGO,-2800)
+fleet.AddShips(ESPIONAGEPROBE,-2000)
+fleet.AddShips(DEATHSTAR,-1)
+fleet.AddShips(PATHFINDER,-4)
+fleet.AddShips(REAPER,-4)
+//Calcolo consumo carburante e lo tolgo dal deu da caricare
+_,fuel = fleet.FlightTime()
+deu = res.Deuterium - minDeu - fuel 
+fleet.SetDeuterium(deu) //Carico il deu
+fleet.SetRecallIn(richiamo) //Setto il richiamo
+fleet, err = fleet.SendNow() //Lancio flotta
+
+Print(fleet.ID, err)
