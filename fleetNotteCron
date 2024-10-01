@@ -1,0 +1,43 @@
+//Script che invia tutte le navi in schiero e lo richiama dopo x Ore e x Minuti
+//Attenzione: se bot dorme non funziona il richiamo
+
+func invioFlotta(){
+   
+    luna, errM = GetMoon("M:5:133:7")
+    ore = 6            //Ore a cui richiamare
+    minuti =  15      // Minuti a cui richiamare
+    richiamo = ore*60*60 + minuti * 60 //calcolo richiamo
+    
+    allShips, _ = luna.GetShips() 
+    fleet = NewFleet()
+    fleet.SetOrigin("M:5:133:7")
+    fleet.SetDestination("M:5:134:7")
+    fleet.SetSpeed(TEN_PERCENT)
+    fleet.SetMission(PARK)
+    fleet.SetAllResources()
+    fleet.SetShips(allShips)
+    fleet.SetRecallIn(richiamo) //Setto il richiamo
+    
+    secs,fuel = fleet.FlightTime()
+    LogInfo("Consumo Carburante = "+fuel)
+    
+    fleet, err = fleet.SendNow() //Lancio flotta
+    if err == nil {
+        LogInfo("Flotta inviata " + fleet.ID)
+        //SendTelegram(TELEGRAM_CHAT_ID,"Fleet save fatto in schiero = " + fleet.ID + " Rientro senza richiamo = "+ShortDur(secs)+ " Richiamo fra = "+ShortDur(richiamo))
+        SendTelegram(TELEGRAM_CHAT_ID,"Fleet save fatto in schiero = " + fleet.ID + " Rientro senza richiamo = "+fleet.ArrivalTime+ " Richiamo fra = "+ShortDur(richiamo))
+    } else {
+        LogError("Failed to create cronjob for " + err)
+        SendTelegram(TELEGRAM_CHAT_ID,"Errore = "+err)
+    }
+}
+
+entryID,err =CronExec("00 30 17 * * *", invioFlotta)
+
+    if err == nil {
+        Print("Starts cronjob " + entryID)
+    } else {
+        LogError("Failed to create cronjob for " + err)
+    }
+    
+<-OnQuitCh
